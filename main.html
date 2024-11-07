@@ -5,19 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Estilmort</title>
     <link rel="stylesheet" href="main.css" />
+    <script
+      src="https://kit.fontawesome.com/f6e91c7f5d.js"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <header>
-      <h1 class="title">EST-IL MORT ?</h1>
+      <h1 class="title">Cette personne est-elle décédée ?</h1>
     </header>
     <div class="search_bar_button">
       <input
-        class="search_bar"
+        class="search_input"
         type="search"
         name="query"
-        placeholder="... est-il mort?"
+        placeholder="Mort.e?"
       />
-      <button class="button" type="submit">Mort ou Pas Mort?</button>
+      <button class="search_button" type="submit">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <p class="result"></p>
     </div>
     <script src="main.js"></script>
   </body>
