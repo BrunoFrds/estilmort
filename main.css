@@ -1,0 +1,42 @@
+@font-face {
+  font-family: "Roboto";
+  src: url("fonts/RobotoCondensed-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Monserrat";
+  src: url("fonts/Montserrat-Regular.otf");
+}
+
+body {
+  background-color: #030712;
+  height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40vh;
+}
+
+.title {
+  color: #ddd;
+  font-family: Montserrat, sans-serif;
+}
+
+.search_bar_button {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  height: 60vh;
+  margin-top: 10%;
+}
+
+.search_bar {
+  width: 300px;
+  height: 30px;
+  margin-bottom: 30px;
+  border-style: solid 2px #ddd;
+  border-radius: 10px;
+}
