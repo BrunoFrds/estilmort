@@ -3,22 +3,28 @@ const input = document.querySelector(".search_input");
 // Stockage de l'élément "search_button" dans la variable "button".
 const button = document.querySelector(".search_button");
 // Ajout d'un évènement "click" à l'élément "button". Chaque fois que l'utilisateur clique sur le bouton, la fonction qui suit sera éxécuté.
+
 const performSearch = async () => {
   // Récupération de la valeur de l'input qu'on stocke dans la variable "name".
   const name = input.value;
-  console.log(name);
+  console.log(`Recherche : ${name}`);
   // Déclaration de l'URL de l'endpoint SPARQL de Wikidata. Endpoint utilisé pour effectuer des requêtes à la base de données de Wikidata.
   const endpointurl = "https://query.wikidata.org/sparql";
   // Création de la variable "sparqlQuery" contenant la requête SPARQL pour récupérer les infos depuis Wikidata.
   const sparqlQuery = `
-    SELECT ?person ?personLabel ?dateOfDeath WHERE {
-      ?person wdt:P31 wd:Q5;  # Filtre pour des humains
-              rdfs:label "${name}"@fr;  # Nom recherché (français, ajustable)
-              wdt:P570 ?dateOfDeath.  # P570 correspond à la date de décès
-              ?person wdt:P21 ?gender.   # P21 correspond au genre
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],fr". }
+  SELECT ?person ?personLabel ?dateOfDeath WHERE {
+    SERVICE wikibase:mwapi {
+      bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                      wikibase:api "EntitySearch";
+                      mwapi:search "${name}";
+                      mwapi:language "fr".
+      ?person wikibase:apiOutputItem mwapi:item.
     }
-    LIMIT 1
+    ?person wdt:P31 wd:Q5.  # Filtre pour des humains
+    OPTIONAL { ?person wdt:P570 ?dateOfDeath. }  # Date de décès optionnelle
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". }
+  }
+  LIMIT 1
   `;
   // SELECT ?person ?personLabel ?dateOfDeath : séléctionne les données qu'on souhaite obtenir.
   // SERVICE wikibase:label : permet d'afficher les labels dans la langue spécifiée.
@@ -44,46 +50,39 @@ const performSearch = async () => {
       container.innerHTML = "";
 
       if (results.length > 0) {
-        const dateOfDeath = results[0].dateOfDeath.value;
+        const personLabel = results[0].personLabel.value;
+        const dateOfDeath = results[0].dateOfDeath?.value;
 
         const yesText = document.createElement("p");
         yesText.className = "yesNo";
-        yesText.textContent = "OUI";
+        yesText.textContent = dateOfDeath ? "OUI" : "NON";
         container.appendChild(yesText);
 
         const icon = document.createElement("i");
-        icon.className = "fa-solid fa-cross";
+        icon.className = dateOfDeath
+          ? "fa-solid fa-cross"
+          : "fa-solid fa-hourglass";
         container.appendChild(icon);
 
         const deathInfo = document.createElement("p");
         deathInfo.className = "infoDeath";
-        deathInfo.textContent = `${name} est décédé(e) le ${new Date(
-          dateOfDeath
-        ).toLocaleDateString()}.`;
+        deathInfo.textContent = dateOfDeath
+          ? `${personLabel} est décédé(e) le ${new Date(
+              dateOfDeath
+            ).toLocaleDateString()}.`
+          : `${personLabel} est toujours vivant(e).`;
         container.appendChild(deathInfo);
 
         console.log(
-          `La personne est décédée le ${new Date(
-            dateOfDeath
-          ).toLocaleDateString()}.`
+          dateOfDeath
+            ? `${personLabel} est décédée le ${new Date(
+                dateOfDeath
+              ).toLocaleDateString()}.`
+            : `${personLabel} est toujours vivant(e).`
         );
       } else {
-        const noText = document.createElement("p");
-        noText.className = "yesNo";
-        noText.textContent = "NON";
-        container.appendChild(noText);
-
-        const icon = document.createElement("i");
-        icon.className = "fa-solid fa-hourglass";
-        container.appendChild(icon);
-
-        const deathInfo = document.createElement("p");
-        deathInfo.className = "infoDeath";
-        deathInfo.textContent = `${name} est toujours vivant(e) !`;
-        container.appendChild(deathInfo);
-        console.log(
-          "La personne est toujours vivante ou alors elle n'éxiste pas!"
-        );
+        container.innerHTML = `<p>Aucun résultat trouvé pour "${name}".</p>`;
+        console.log("Aucun résultat trouvé.");
       }
 
       const backButton = document.createElement("button");
@@ -95,7 +94,7 @@ const performSearch = async () => {
       container.appendChild(backButton);
     })
     .catch((error) => {
-      console.error("Errur lors de la requête :", error);
+      console.error("Erreur lors de la requête :", error);
     });
 };
 

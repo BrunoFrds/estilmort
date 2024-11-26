@@ -88,6 +88,11 @@ header {
   margin: auto;
 }
 
+.search_input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .yesNo {
   font-family: Montserrat;
   color: #ddd;
@@ -99,7 +104,7 @@ header {
   color: #ddd;
   font-size: 25px;
   text-align: center;
-  width: 350px;
+  width: 60%;
 }
 
 .fa-cross,
@@ -123,6 +128,27 @@ header {
 .fa-arrow-left {
   color: #ddd;
   font-size: 20px;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.suggestion-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background: #f0f0f0;
 }
 
 @media only screen and (max-width: 768px) {
