@@ -16,6 +16,7 @@
 body {
   background-color: #000000;
   height: 100vh;
+  margin: 0;
 }
 
 header {
@@ -80,6 +81,7 @@ header {
 .search_result {
   display: flex;
   flex-direction: column;
+  justify-content: space-around;
   align-items: center;
   width: 600px;
   height: 500px;
@@ -149,6 +151,14 @@ header {
 
 .suggestion-item:hover {
   background: #f0f0f0;
+}
+
+.noResult {
+  color: #ddd;
+  font-family: Montserrat;
+  font-size: 20px;
+  text-align: center;
+  margin-top: 20px;
 }
 
 @media only screen and (max-width: 768px) {

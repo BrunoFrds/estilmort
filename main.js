@@ -24,7 +24,7 @@ const performSearch = async () => {
     OPTIONAL { ?person wdt:P570 ?dateOfDeath. }  # Date de décès optionnelle
     SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". }
   }
-  LIMIT 1
+  LIMIT 5
   `;
   // SELECT ?person ?personLabel ?dateOfDeath : séléctionne les données qu'on souhaite obtenir.
   // SERVICE wikibase:label : permet d'afficher les labels dans la langue spécifiée.
@@ -81,8 +81,11 @@ const performSearch = async () => {
             : `${personLabel} est toujours vivant(e).`
         );
       } else {
-        container.innerHTML = `<p>Aucun résultat trouvé pour "${name}".</p>`;
-        console.log("Aucun résultat trouvé.");
+        const noResult = document.createElement("p");
+        noResult.className = "noResult";
+        noResult.textContent = `Aucun résultat trouvé pour "${name}".`;
+        container.innerHTML = ""; // Pour vider le container avant d'ajouter
+        container.appendChild(noResult);
       }
 
       const backButton = document.createElement("button");
