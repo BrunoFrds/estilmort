@@ -26,6 +26,10 @@ header {
   height: 30vh;
 }
 
+p {
+  margin: 0;
+}
+
 .title {
   color: #ddd;
   font-family: Montserrat, sans-serif;
@@ -122,6 +126,7 @@ header {
   font-family: Montserrat;
   color: #ddd;
   font-size: 60px;
+  margin: 20px auto;
 }
 
 .infoDeath {
@@ -129,7 +134,8 @@ header {
   color: #ddd;
   font-size: 25px;
   text-align: center;
-  width: 60%;
+  width: 80%;
+  white-space: pre-line;
 }
 
 .fa-cross,
@@ -258,7 +264,7 @@ header {
     font-family: Montserrat;
     color: #ddd;
     font-size: 35px;
-    margin: 20px auto;
+    margin: 10px auto;
   }
 
   .infoDeath {
@@ -267,6 +273,8 @@ header {
     font-size: 20px;
     text-align: center;
     width: 90%;
+    white-space: pre-line;
+    margin: 15px auto 10px auto;
   }
 
   .fa-cross,

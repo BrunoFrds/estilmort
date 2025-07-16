@@ -13,7 +13,7 @@ const fetchSuggestions = (query, autoSelect = false) => {
 
   const endpointurl = "https://query.wikidata.org/sparql";
   const sparqlQuery = `
-    SELECT ?person ?personLabel ?dateOfDeath WHERE {
+    SELECT ?person ?personLabel ?dateOfDeath ?causeOfDeathLabel ?deathCauseReasonLabel WHERE {
       SERVICE wikibase:mwapi {
         bd:serviceParam wikibase:endpoint "www.wikidata.org";
                         wikibase:api "EntitySearch";
@@ -23,7 +23,14 @@ const fetchSuggestions = (query, autoSelect = false) => {
       }
       ?person wdt:P31 wd:Q5.
       OPTIONAL { ?person wdt:P570 ?dateOfDeath. }
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". }
+      OPTIONAL { ?person wdt:P509 ?causeOfDeath. }
+      OPTIONAL { ?person wdt:P1197 ?deathCauseReason. }
+      SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "fr".
+        ?person rdfs:label ?personLabel.
+        ?causeOfDeath rdfs:label ?causeOfDeathLabel.
+        ?deathCauseReason rdfs:label ?deathCauseReasonLabel.
+      }
     }
     LIMIT 5
   `;
@@ -51,9 +58,10 @@ const fetchSuggestions = (query, autoSelect = false) => {
         const first = results[0];
         const personLabel = first.personLabel.value;
         const dateOfDeath = first.dateOfDeath?.value;
+        const causeOfDeath = first.causeOfDeathLabel?.value;
 
         if (personLabel.toLowerCase() === query.trim().toLowerCase()) {
-          displayResult(personLabel, dateOfDeath);
+          displayResult(personLabel, dateOfDeath, causeOfDeath);
           return;
         }
       }
@@ -61,6 +69,7 @@ const fetchSuggestions = (query, autoSelect = false) => {
       results.forEach((result) => {
         const personLabel = result.personLabel.value;
         const dateOfDeath = result.dateOfDeath?.value;
+        const causeOfDeath = result.causeOfDeathLabel?.value;
 
         const listItem = document.createElement("li");
         listItem.className = "suggestion_item";
@@ -68,7 +77,7 @@ const fetchSuggestions = (query, autoSelect = false) => {
 
         listItem.addEventListener("click", () => {
           suggestionsList.innerHTML = "";
-          displayResult(personLabel, dateOfDeath);
+          displayResult(personLabel, dateOfDeath, causeOfDeath);
         });
 
         suggestionsList.appendChild(listItem);
@@ -80,9 +89,10 @@ const fetchSuggestions = (query, autoSelect = false) => {
     });
 };
 // Fonction pour afficher le résultat (mort ou vivant)
-const displayResult = (personLabel, dateOfDeath) => {
+const displayResult = (personLabel, dateOfDeath, causeOfDeath) => {
   container.className = "search_result";
   container.innerHTML = "";
+  console.log("Affichage du résultat pour :", personLabel, dateOfDeath, causeOfDeath);
 
   const yesText = document.createElement("p");
   yesText.className = "yesNo";
@@ -95,9 +105,14 @@ const displayResult = (personLabel, dateOfDeath) => {
 
   const deathInfo = document.createElement("p");
   deathInfo.className = "infoDeath";
-  deathInfo.textContent = dateOfDeath
-    ? `${personLabel} est décédé(e) le ${new Date(dateOfDeath).toLocaleDateString()}.`
-    : `${personLabel} est toujours vivant(e).`;
+  if (dateOfDeath) {
+    deathInfo.textContent = `${personLabel} est décédé(e) le ${new Date(dateOfDeath).toLocaleDateString()}.\n`;
+    if (causeOfDeath) {
+      deathInfo.textContent += ` Cause de décès : ${causeOfDeath}.`;
+    }
+  } else {
+    deathInfo.textContent = `${personLabel} est toujours vivant(e).`;
+  }
   container.appendChild(deathInfo);
 
   const backButton = document.createElement("button");
