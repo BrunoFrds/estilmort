@@ -5,7 +5,7 @@ const button = document.querySelector(".search_button");
 const suggestionsList = document.querySelector(".suggestions_list");
 const container = input.parentElement;
 // Fonction pour interroger Wikidata à chaque frappe
-const fetchSuggestions = (query) => {
+const fetchSuggestions = (query, autoSelect = false) => {
   if (!query) {
     suggestionsList.innerHTML = "";
     return;
@@ -44,6 +44,18 @@ const fetchSuggestions = (query) => {
       if (results.length === 0) {
         suggestionsList.innerHTML = `<li class="noResult">Aucun résultat trouvé pour "${query}".</li>`;
         return;
+      }
+
+      // 🔥 Si autoSelect est true et que le premier résultat correspond exactement au nom recherché
+      if (autoSelect) {
+        const first = results[0];
+        const personLabel = first.personLabel.value;
+        const dateOfDeath = first.dateOfDeath?.value;
+
+        if (personLabel.toLowerCase() === query.trim().toLowerCase()) {
+          displayResult(personLabel, dateOfDeath);
+          return;
+        }
       }
 
       results.forEach((result) => {
@@ -107,12 +119,11 @@ const resetSearch = () => {
   // Re-sélection des nouveaux éléments (car les anciens ont été supprimés)
   const input = container.querySelector(".search_input");
   const button = container.querySelector(".search_button");
-  const suggestionsList = container.querySelector(".suggestions_list");
 
   // Réattacher les listeners
   button.addEventListener("click", () => {
     const name = input.value;
-    fetchSuggestions(name);
+    fetchSuggestions(name, true); // ← ici aussi
   });
 
   input.addEventListener("input", (e) => {
@@ -132,7 +143,7 @@ const resetSearch = () => {
 // Clique sur le bouton
 button.addEventListener("click", () => {
   const name = input.value;
-  fetchSuggestions(name);
+  fetchSuggestions(name, true); // ← on active autoSelect
 });
 // Suggestions dynamiques
 input.addEventListener("input", (e) => {
