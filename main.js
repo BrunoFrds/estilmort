@@ -2,127 +2,149 @@
 const input = document.querySelector(".search_input");
 // Stockage de l'élément "search_button" dans la variable "button".
 const button = document.querySelector(".search_button");
-
-// Définition de la fonction "performSearch" qui sera appelée lors du clic sur le bouton ou l'appui sur la touche "Entrée".
-const performSearch = async () => {
-  // Récupération de la valeur de l'input qu'on stocke dans la variable "name".
-  const name = input.value;
-  // Déclaration de l'URL de l'endpoint SPARQL de Wikidata. C'est l'adresse qui permet d'interroger la base de données Wikidata.
-  const endpointurl = "https://query.wikidata.org/sparql";
-  // Création de la variable "sparqlQuery" contenant la requête SPARQL pour récupérer les infos depuis Wikidata.
-  const sparqlQuery = `
-  SELECT ?person ?personLabel ?dateOfDeath WHERE {
-    SERVICE wikibase:mwapi {
-      bd:serviceParam wikibase:endpoint "www.wikidata.org";
-                      wikibase:api "EntitySearch";
-                      mwapi:search "${name}";
-                      mwapi:language "fr".
-      ?person wikibase:apiOutputItem mwapi:item.
-    }
-    ?person wdt:P31 wd:Q5.  # On ne garde que les éléments de type "humain"
-    OPTIONAL { ?person wdt:P570 ?dateOfDeath. }  # On récupère la date de décès si elle existe
-    SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". } # On demande les labels (noms) en français
+const suggestionsList = document.querySelector(".suggestions_list");
+const container = input.parentElement;
+// Fonction pour interroger Wikidata à chaque frappe
+const fetchSuggestions = (query) => {
+  if (!query) {
+    suggestionsList.innerHTML = "";
+    return;
   }
-  LIMIT 5
-  `;
-  // SELECT ?person ?personLabel ?dateOfDeath : séléctionne les données qu'on souhaite obtenir.
-  // SERVICE wikibase:label : permet d'afficher les labels dans la langue spécifiée.
-  // LIMIT 5 : limite le résultat à une seule correspondance.
 
-  // Construction de l'URL complète pour envoyer la requête SPARQL, encodée pour être utilisable dans l'URL.
-  // "encodeURIComponent" transforme la requête en un format utilisable dans une URL.
-  // Le paramètre "&format=json" spécifie qu'on souhaite les résultats au format JSON.
-  const url =
-    endpointurl + "?query=" + encodeURIComponent(sparqlQuery) + "&format=json";
-  // Envoi de la requête HTTP avec "fetch" vers Wikidata
+  const endpointurl = "https://query.wikidata.org/sparql";
+  const sparqlQuery = `
+    SELECT ?person ?personLabel ?dateOfDeath WHERE {
+      SERVICE wikibase:mwapi {
+        bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                        wikibase:api "EntitySearch";
+                        mwapi:search "${query}";
+                        mwapi:language "fr".
+        ?person wikibase:apiOutputItem mwapi:item.
+      }
+      ?person wdt:P31 wd:Q5.
+      OPTIONAL { ?person wdt:P570 ?dateOfDeath. }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". }
+    }
+    LIMIT 5
+  `;
+
+  const url = endpointurl + "?query=" + encodeURIComponent(sparqlQuery) + "&format=json";
+
   fetch(url)
     .then((response) => {
-      // Vérification que la réponse est correcte (code 200 OK)
       if (!response.ok) {
-        throw new Error(`Erreur de réseau : ${response.status}`);
+        throw new Error(`Erreur réseau : ${response.status}`);
       }
-      // Conversion de la réponse en JSON
       return response.json();
     })
     .then((data) => {
-      // Accès aux résultats de la requête SPARQL
       const results = data.results.bindings;
-      // On récupère le parent de l'input (div .search_container) et on le transforme en conteneur de résultat
-      const container = input.parentElement;
-      container.className = "search_result";
-      // On vide le contenu existant
-      container.innerHTML = "";
+      suggestionsList.innerHTML = "";
 
-      // Si des résultats sont trouvés :
-      if (results.length > 0) {
-        // On prend le premier résultat retourné
-        const personLabel = results[0].personLabel.value;
-        // On utilise l'opérateur ?. car la date peut être absente
-        const dateOfDeath = results[0].dateOfDeath?.value;
-
-        // Création d'un paragraphe qui affiche "OUI" si mort, "NON" sinon
-        const yesText = document.createElement("p");
-        yesText.className = "yesNo";
-        yesText.textContent = dateOfDeath ? "OUI" : "NON";
-        container.appendChild(yesText);
-
-        // Création d'une icône (croix si mort, sablier si vivant)
-        const icon = document.createElement("i");
-        icon.className = dateOfDeath
-          ? "fa-solid fa-cross"
-          : "fa-solid fa-hourglass";
-        container.appendChild(icon);
-
-        // Création d'un paragraphe d'information indiquant la date de décès ou qu'il/elle est encore vivant(e)
-        const deathInfo = document.createElement("p");
-        deathInfo.className = "infoDeath";
-        deathInfo.textContent = dateOfDeath
-          ? `${personLabel} est décédé(e) le ${new Date(
-              dateOfDeath
-            ).toLocaleDateString()}.`
-          : `${personLabel} est toujours vivant(e).`;
-        container.appendChild(deathInfo);
-
-        // Affichage du résultat dans la console pour déboguer
-        console.log(
-          dateOfDeath
-            ? `${personLabel} est décédée le ${new Date(
-                dateOfDeath
-              ).toLocaleDateString()}.`
-            : `${personLabel} est toujours vivant(e).`
-        );
-      } else {
-        // Aucun résultat trouvé pour la recherche : on affiche un message d'erreur
-        const noResult = document.createElement("p");
-        noResult.className = "noResult";
-        noResult.textContent = `Aucun résultat trouvé pour "${name}".`;
-        // On s'assure que le conteneur est vide
-        container.innerHTML = "";
-        container.appendChild(noResult);
+      if (results.length === 0) {
+        suggestionsList.innerHTML = `<li class="noResult">Aucun résultat trouvé pour "${query}".</li>`;
+        return;
       }
 
-      // Création d'un bouton pour revenir à la recherche initiale (recharge la page)
-      const backButton = document.createElement("button");
-      backButton.className = "backToSearch";
-      backButton.innerHTML = '<i class="fa-solid fa-arrow-left"></i>';
-      backButton.addEventListener("click", () => {
-        // Recharge la page pour revenir à l'état initial
-        location.reload();
+      results.forEach((result) => {
+        const personLabel = result.personLabel.value;
+        const dateOfDeath = result.dateOfDeath?.value;
+
+        const listItem = document.createElement("li");
+        listItem.className = "suggestion_item";
+        listItem.textContent = personLabel;
+
+        listItem.addEventListener("click", () => {
+          suggestionsList.innerHTML = "";
+          displayResult(personLabel, dateOfDeath);
+        });
+
+        suggestionsList.appendChild(listItem);
       });
-      container.appendChild(backButton);
+      suggestionsList.classList.remove("hidden");
     })
     .catch((error) => {
-      // En cas d'erreur (connexion ou autre), on affiche l'erreur dans la console
-      console.error("Erreur lors de la requête :", error);
+      console.error("Erreur de requête :", error);
     });
 };
+// Fonction pour afficher le résultat (mort ou vivant)
+const displayResult = (personLabel, dateOfDeath) => {
+  container.className = "search_result";
+  container.innerHTML = "";
 
-// On exécute "performSearch" quand on clique sur le bouton
-button.addEventListener("click", performSearch);
+  const yesText = document.createElement("p");
+  yesText.className = "yesNo";
+  yesText.textContent = dateOfDeath ? "OUI" : "NON";
+  container.appendChild(yesText);
 
-// On exécute aussi "performSearch" si on appuie sur "Entrée" dans l'input
+  const icon = document.createElement("i");
+  icon.className = dateOfDeath ? "fa-solid fa-cross" : "fa-solid fa-hourglass";
+  container.appendChild(icon);
+
+  const deathInfo = document.createElement("p");
+  deathInfo.className = "infoDeath";
+  deathInfo.textContent = dateOfDeath
+    ? `${personLabel} est décédé(e) le ${new Date(dateOfDeath).toLocaleDateString()}.`
+    : `${personLabel} est toujours vivant(e).`;
+  container.appendChild(deathInfo);
+
+  const backButton = document.createElement("button");
+  backButton.className = "backToSearch";
+  backButton.innerHTML = '<i class="fa-solid fa-arrow-left"></i>';
+  backButton.addEventListener("click", resetSearch);
+  container.appendChild(backButton);
+
+  suggestionsList.classList.add("hidden");
+};
+
+const resetSearch = () => {
+  container.className = "search_bar_button";
+  container.innerHTML = `
+    <input type="search" class="search_input" autocomplete="off" name="query" placeholder="Tapez un nom">
+    <button class="search_button"><i class="fa-solid fa-magnifying-glass"></i></button>
+  `;
+
+  // Re-sélection des nouveaux éléments (car les anciens ont été supprimés)
+  const input = container.querySelector(".search_input");
+  const button = container.querySelector(".search_button");
+  const suggestionsList = container.querySelector(".suggestions_list");
+
+  // Réattacher les listeners
+  button.addEventListener("click", () => {
+    const name = input.value;
+    fetchSuggestions(name);
+  });
+
+  input.addEventListener("input", (e) => {
+    fetchSuggestions(e.target.value);
+  });
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (suggestionsList.firstChild) {
+        suggestionsList.firstChild.click();
+      }
+    }
+  });
+};
+
+// Clique sur le bouton
+button.addEventListener("click", () => {
+  const name = input.value;
+  fetchSuggestions(name);
+});
+// Suggestions dynamiques
+input.addEventListener("input", (e) => {
+  fetchSuggestions(e.target.value);
+});
+
+// Entrée clavier = sélection automatique
 input.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    performSearch();
+    event.preventDefault();
+    if (suggestionsList.firstChild) {
+      suggestionsList.firstChild.click();
+    }
   }
 });

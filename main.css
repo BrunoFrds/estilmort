@@ -32,9 +32,11 @@ header {
 }
 
 .wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   width: 80%;
   max-width: 580px;
-  height: 100px;
   margin: 0 auto;
 }
 
@@ -67,6 +69,27 @@ header {
   background-color: #191919;
   border: solid 2px #ddd;
   border-left: none;
+}
+
+.suggestions_list {
+  list-style: none;
+  padding: 0;
+  margin: 10px auto 0;
+  overflow-y: auto;
+  background-color: #000000;
+  width: 80%;
+}
+
+.hidden {
+  display: none;
+}
+
+.suggestion_item {
+  padding: 5px 20px 5px 20px;
+  cursor: pointer;
+  color: #ddd;
+  font-family: Montserrat, sans-serif;
+  font-size: 20px;
 }
 
 .fa-magnifying-glass {
@@ -170,7 +193,6 @@ header {
   .wrapper {
     width: 80%;
     max-width: 580px;
-    height: 60px;
     margin: 0 auto;
   }
 
@@ -204,6 +226,17 @@ header {
     border: solid 2px #ddd;
     border-left: none;
   }
+
+  .suggestions_list {
+  width: 100%;
+  max-width: 580px;
+  margin: 10px auto 0;
+  background-color: #000000;
+  list-style: none;
+  padding: 0;
+  overflow-y: auto;
+  z-index: 10; /* assure qu'elle passe au-dessus si besoin */
+}
 
   .fa-magnifying-glass {
     font-size: 20px;
